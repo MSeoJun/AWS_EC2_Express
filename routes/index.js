@@ -10,7 +10,6 @@ router.get('/', function(req, res, next) {
     const test = res.data.mealServiceDietInfo[1].row[0].DDISH_NM;
     for(let i=0; i<test.split("<br/>").length; i++) {
       a[i] = test.split("<br/>")[i].match(/[^(삼일)]/g).join('').match(/[가-힣]/g).join("");
-      console.log(a[i]);
     }
   })
   .then(() => {
