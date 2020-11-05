@@ -1,6 +1,63 @@
 const { default: Axios } = require('axios');
 var express = require('express');
 var router = express.Router();
+var {Expo} = require("expo-server-sdk")
+const expo = new Expo();
+
+const savedPushTokens = [];
+
+const saveToken = (token) => {
+  if (savedPushTokens.indexOf(token === -1)) {
+    savedPushTokens.push(token);
+  }
+};
+
+const handlePushTokens = (message) => {
+  let notification = [];
+
+  for (let pushToken of savedPushTokens) {
+    if (!Expo.isExpoPushToken(pushToken)) {
+      console.log("ERROR");
+      continue;
+    }
+
+    notification.push({
+      to: pushToken,
+      sound: "default",
+      title: "오늘의 급식~",
+      body: message,
+      data: { message },
+    });
+  }
+  let chunks = expo.chunkPushNotifications(notification);
+  (async () => {
+    for (let chunk of chunks) {
+      try {
+        let receipts = await expo.sendPushNotificationsAsync(chunk);
+        console.log(receipts);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  })();
+};
+
+router.get("/", (req, res) => {
+  res.send("서버 실행중...");
+});
+
+router.post("/token", (req, res) => {
+  saveToken(req.body.token.value);
+  console.log(`토큰 저장함 ${req.body.token.value}`);
+  console.log(`토큰이 저장되었습니다. ${req.body.token.value}`);
+});
+
+router.post("/message", (req, res) => {
+  console.log(req.body.message);
+  handlePushTokens(req.body.message);
+  console.log("메세지 전송");
+  res.send(`메세지를 전송합니다. ${req.body.message}`);
+});
 
 require('date-utils');
 var newDate = new Date();
